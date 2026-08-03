@@ -1,0 +1,207 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("ADMIN")
+  avatar    String?
+  bio       String?
+  isActive  Boolean  @default(true)
+  blogs     Blog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String          @unique
+  description String
+  content     String?
+  coverImage  String?
+  githubUrl   String?
+  liveUrl     String?
+  featured    Boolean         @default(false)
+  isPublished Boolean         @default(false)
+  viewCount   Int             @default(0)
+  order       Int             @default(0)
+  categoryId  String?         @db.ObjectId
+  category    Category?       @relation(fields: [categoryId], references: [id])
+  images      ProjectImage[]
+  skills      ProjectSkill[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([categoryId])
+  @@index([isPublished])
+}
+
+model ProjectImage {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  projectId String  @db.ObjectId
+  project   Project @relation(fields: [projectId], references: [id])
+  url       String
+  alt       String?
+  order     Int     @default(0)
+
+  @@index([projectId])
+}
+
+model ProjectSkill {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId String   @db.ObjectId
+  skillId   String   @db.ObjectId
+  project   Project  @relation(fields: [projectId], references: [id])
+  skill     Skill    @relation(fields: [skillId], references: [id])
+
+  @@unique([projectId, skillId])
+  @@index([skillId])
+}
+
+model Skill {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  icon        String?
+  level       Int            @default(0)
+  order       Int            @default(0)
+  isPublished Boolean        @default(true)
+  projects    ProjectSkill[]
+
+  @@index([isPublished])
+}
+
+model Category {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  slug      String    @unique
+  type      String    @default("PROJECT")
+  order     Int       @default(0)
+  projects  Project[]
+
+  @@index([type])
+}
+
+model Experience {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  company     String
+  role        String
+  location    String?
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+model Education {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  school      String
+  degree      String
+  field       String?
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+model Certificate {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  issuer       String
+  url          String?
+  image        String?
+  credentialId String?
+  issueDate    DateTime
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([order])
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+}
+
+model Blog {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String        @unique
+  excerpt     String
+  content     String
+  coverImage  String?
+  readTime    Int           @default(0)
+  isPublished Boolean       @default(false)
+  viewCount   Int           @default(0)
+  publishedAt DateTime?
+  authorId    String        @db.ObjectId
+  author      User          @relation(fields: [authorId], references: [id])
+  categoryId  String?       @db.ObjectId
+  category    BlogCategory? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([isPublished])
+}
+
+model BlogCategory {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  slug   String @unique
+  blogs  Blog[]
+}
+
+model Visitor {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ip        String?
+  userAgent String?
+  path      String?
+  referrer  String?
+  visitedAt DateTime @default(now())
+
+  @@index([visitedAt])
+}
+
+model Settings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model SocialLinks {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  label    String
+  url      String
+  icon     String
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  @@index([isActive])
+}
