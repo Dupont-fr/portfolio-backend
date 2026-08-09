@@ -1,4 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
+import { MongoNetworkError, MongoServerSelectionError } from 'mongodb'
+import { PrismaClientInitializationError } from '@prisma/client/runtime/library'
 import { ZodError } from 'zod'
 import { ApiError } from '../utils/ApiError.js'
 import { env } from '../config/env.js'
@@ -14,6 +16,20 @@ export function errorMiddleware(
       status: 'error',
       message: 'Validation échouée',
       details: error.flatten(),
+    })
+    return
+  }
+
+  if (
+    error instanceof PrismaClientInitializationError ||
+    error instanceof MongoServerSelectionError ||
+    error instanceof MongoNetworkError
+  ) {
+    console.error('[db] Connexion MongoDB indisponible:', error.message)
+    res.status(503).json({
+      status: 'error',
+      message:
+        'Service indisponible : impossible de joindre la base de données. Réessayez dans un instant.',
     })
     return
   }
