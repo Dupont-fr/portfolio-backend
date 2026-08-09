@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
-    "prisma:push": "prisma db push"
+    "prisma:push": "prisma db push",
+    "seed": "tsx src/scripts/seed-admin.ts"
   },
   "license": "ISC",
   "dependencies": {

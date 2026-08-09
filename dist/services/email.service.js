@@ -42,7 +42,7 @@ function emailShell(content) {
 function brandBlock() {
     return `
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-family:'Segoe UI',Arial,sans-serif;color:#6EE7FF;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Dupont Djéague</div>
+      <div style="font-family:'Segoe UI',Arial,sans-serif;color:#6EE7FF;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Dupont Djeague</div>
       <div style="font-family:'Segoe UI',Arial,sans-serif;color:#8CA3D4;font-size:11px;letter-spacing:1px">Développeur Full Stack JavaScript</div>
     </div>
   `;
@@ -51,7 +51,7 @@ function signatureBlock() {
     return `
     <div style="text-align:center;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)">
       <div style="font-family:'Segoe UI',Arial,sans-serif;color:#FFFFFF;font-size:14px;font-weight:600">Cordialement,</div>
-      <div style="font-family:'Segoe UI',Arial,sans-serif;color:#FFFFFF;font-size:14px">Dupont Djéague</div>
+      <div style="font-family:'Segoe UI',Arial,sans-serif;color:#FFFFFF;font-size:14px">Dupont Djeague</div>
       <div style="font-family:'Segoe UI',Arial,sans-serif;color:#8CA3D4;font-size:12px;margin-top:6px">Ouest Cameroun · ${escapeHtml(env.emailFrom)}</div>
     </div>
   `;
@@ -136,7 +136,7 @@ async function sendBrevo(payload) {
             Accept: 'application/json',
         },
         body: JSON.stringify({
-            sender: { name: 'Dupont Djéague — Portfolio', email: env.emailFrom },
+            sender: { name: 'Dupont Djeague — Portfolio', email: env.emailFrom },
             ...payload,
         }),
     });
@@ -150,7 +150,7 @@ async function sendBrevo(payload) {
 export async function sendContactEmail(data) {
     console.log(`[email] Envoi de l’email de notification à ${env.contactEmail}...`);
     await sendBrevo({
-        to: [{ email: env.contactEmail, name: 'Dupont Djéague' }],
+        to: [{ email: env.contactEmail, name: 'Dupont Djeague' }],
         replyTo: { email: data.email, name: data.name },
         subject: `[Portfolio] Nouveau message : ${data.subject}`,
         htmlContent: emailShell(notificationContent(data)),
