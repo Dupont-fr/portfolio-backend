@@ -1,6 +1,13 @@
 import { z } from 'zod';
 export const skillSchema = z.object({
     name: z.string().trim().min(2, 'Le nom doit contenir au moins 2 caractères').max(80, 'Nom trop long'),
+    category: z
+        .string()
+        .trim()
+        .max(60, 'Catégorie trop longue')
+        .optional()
+        .nullable()
+        .transform((value) => (value === '' ? null : value)),
     icon: z
         .string()
         .trim()

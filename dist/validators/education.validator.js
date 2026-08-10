@@ -13,11 +13,17 @@ const optionalText = (label, max) => z
     .optional()
     .nullable()
     .transform((value) => (value === '' ? null : value));
+const listOfText = (label, itemMax, maxItems) => z
+    .array(z.string().trim().min(1).max(itemMax, `${label} trop long`))
+    .max(maxItems, `La liste de ${label.toLowerCase()} est trop longue`)
+    .optional()
+    .nullable();
 export const educationSchema = z.object({
     school: z.string().trim().min(2, 'Le nom de l’école est requis').max(120, 'Nom trop long'),
     degree: z.string().trim().min(2, 'Le diplôme est requis').max(120, 'Diplôme trop long'),
     field: optionalText('Le domaine', 120),
     description: optionalText('La description', 2000),
+    tags: listOfText('Les compétences', 60, 20),
     startDate: dateString,
     endDate: dateString.optional().nullable(),
     isCurrent: z.boolean().default(false),
