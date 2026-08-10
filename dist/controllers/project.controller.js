@@ -19,7 +19,7 @@ async function transformProjectInput(data, excludeId) {
         await assertSlugAvailable(slug, excludeId);
         return data;
     }
-    if (!title) {
+    if (!title || excludeId !== undefined) {
         return data;
     }
     const generatedSlug = slugify(title);

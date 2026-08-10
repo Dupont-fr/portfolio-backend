@@ -21,13 +21,13 @@ const listOfText = (label, itemMax, maxItems) => z
     .nullable();
 export const projectSchema = z.object({
     title: z.string().trim().min(2, 'Le titre est requis').max(120, 'Titre trop long'),
-    slug: z
+    slug: z.preprocess((value) => (value === '' || value === null ? undefined : value), z
         .string()
         .trim()
         .min(2, 'Le slug est requis')
         .max(160, 'Slug trop long')
         .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug invalide (lettres minuscules, chiffres et tirets)')
-        .optional(),
+        .optional()),
     description: z.string().trim().min(10, 'La description est trop courte').max(400, 'Description trop longue'),
     longDescription: optionalText('La description longue', 10000),
     year: optionalText('L’année', 20),

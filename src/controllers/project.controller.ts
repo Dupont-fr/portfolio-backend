@@ -28,7 +28,7 @@ async function transformProjectInput(
     return data
   }
 
-  if (!title) {
+  if (!title || excludeId !== undefined) {
     return data
   }
 
