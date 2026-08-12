@@ -6,6 +6,15 @@ const dateString = z
   .min(4, 'Date invalide')
   .max(10, 'Date invalide')
   .regex(/^\d{4}(-\d{2}(-\d{2})?)?$/, 'Format de date invalide (ex : 2024 ou 2024-09)')
+  .superRefine((value, ctx) => {
+    const [, month, day] = value.split('-').map(Number)
+    if (month !== undefined && (month < 1 || month > 12)) {
+      ctx.addIssue({ code: 'custom', message: 'Le mois doit être compris entre 1 et 12' })
+    }
+    if (day !== undefined && (day < 1 || day > 31)) {
+      ctx.addIssue({ code: 'custom', message: 'Le jour doit être compris entre 1 et 31' })
+    }
+  })
 
 const optionalText = (label: string, max: number) =>
   z
@@ -17,14 +26,16 @@ const optionalText = (label: string, max: number) =>
     .transform((value) => (value === '' ? null : value))
 
 const optionalUrl = (label: string) =>
-  z
-    .string()
-    .trim()
-    .url(`${label} doit être une URL valide`)
-    .max(500, `${label} trop longue`)
-    .optional()
-    .nullable()
-    .transform((value) => (value === '' ? null : value))
+  z.preprocess(
+    (value) => (value === '' ? null : value),
+    z
+      .string()
+      .trim()
+      .url(`${label} doit être une URL valide`)
+      .max(500, `${label} trop longue`)
+      .optional()
+      .nullable(),
+  )
 
 const listOfText = (label: string, itemMax: number, maxItems: number) =>
   z

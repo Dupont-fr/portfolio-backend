@@ -1,12 +1,11 @@
 import { z } from 'zod';
-const optionalUrl = (label) => z
+const optionalUrl = (label) => z.preprocess((value) => (value === '' ? null : value), z
     .string()
     .trim()
     .url(`${label} doit être une URL valide`)
     .max(500, `${label} trop longue`)
     .optional()
-    .nullable()
-    .transform((value) => (value === '' ? null : value));
+    .nullable());
 const listOfText = (label, itemMax, maxItems) => z
     .array(z.string().trim().min(1).max(itemMax, `${label} trop long`))
     .max(maxItems, `La liste de ${label.toLowerCase()} est trop longue`)

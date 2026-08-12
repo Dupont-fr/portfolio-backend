@@ -1,14 +1,16 @@
 import { z } from 'zod'
 
 const optionalUrl = (label: string) =>
-  z
-    .string()
-    .trim()
-    .url(`${label} doit être une URL valide`)
-    .max(500, `${label} trop longue`)
-    .optional()
-    .nullable()
-    .transform((value) => (value === '' ? null : value))
+  z.preprocess(
+    (value) => (value === '' ? null : value),
+    z
+      .string()
+      .trim()
+      .url(`${label} doit être une URL valide`)
+      .max(500, `${label} trop longue`)
+      .optional()
+      .nullable(),
+  )
 
 const listOfText = (label: string, itemMax: number, maxItems: number) =>
   z
