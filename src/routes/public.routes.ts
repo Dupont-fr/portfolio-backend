@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   publicBlogsController,
+  publicCertificationsController,
   publicEducationsController,
   publicExperiencesController,
   publicProjectsController,
@@ -16,3 +17,4 @@ publicRouter.get('/educations', publicEducationsController.list)
 publicRouter.get('/experiences', publicExperiencesController.list)
 publicRouter.get('/blog', publicBlogsController.list)
 publicRouter.get('/blog/:slug', publicBlogsController.getBySlug)
+publicRouter.get('/certifications', publicCertificationsController.list)

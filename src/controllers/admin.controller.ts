@@ -11,7 +11,15 @@ import {
 } from '../repositories/message.repository.js'
 import { getVisitStats } from '../repositories/visitor.repository.js'
 
-const COLLECTIONS_TO_COUNT = ['Project', 'Skill', 'Experience', 'Education', 'Blog', 'Visitor'] as const
+const COLLECTIONS_TO_COUNT = [
+  'Project',
+  'Skill',
+  'Experience',
+  'Education',
+  'Blog',
+  'Certification',
+  'Visitor',
+] as const
 
 export async function dashboardStatsHandler(_req: Request, res: Response): Promise<void> {  const db = await getDb()
 

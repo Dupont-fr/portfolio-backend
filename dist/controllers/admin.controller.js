@@ -2,7 +2,15 @@ import { getDb } from '../config/mongo.js';
 import { ApiError } from '../utils/ApiError.js';
 import { deleteMessage, getMessage, listMessages, markMessageRead, countMessages, countUnreadMessages, } from '../repositories/message.repository.js';
 import { getVisitStats } from '../repositories/visitor.repository.js';
-const COLLECTIONS_TO_COUNT = ['Project', 'Skill', 'Experience', 'Education', 'Blog', 'Visitor'];
+const COLLECTIONS_TO_COUNT = [
+    'Project',
+    'Skill',
+    'Experience',
+    'Education',
+    'Blog',
+    'Certification',
+    'Visitor',
+];
 export async function dashboardStatsHandler(_req, res) {
     const db = await getDb();
     const counts = await Promise.all(COLLECTIONS_TO_COUNT.map((collection) => db.collection(collection).countDocuments()));

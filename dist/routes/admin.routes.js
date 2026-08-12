@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { dashboardStatsHandler, deleteMessageHandler, getMessageHandler, listMessagesHandler, markMessageReadHandler, visitStatsHandler, } from '../controllers/admin.controller.js';
 import { blogsController } from '../controllers/blog.controller.js';
+import { certificationsController } from '../controllers/certification.controller.js';
 import { skillsController } from '../controllers/skill.controller.js';
 import { educationsController } from '../controllers/education.controller.js';
 import { experiencesController } from '../controllers/experience.controller.js';
@@ -20,4 +21,5 @@ adminRouter.use('/educations', createCrudRoutes(educationsController));
 adminRouter.use('/experiences', createCrudRoutes(experiencesController));
 adminRouter.use('/projects', createCrudRoutes(projectsController));
 adminRouter.use('/blog', createCrudRoutes(blogsController));
+adminRouter.use('/certifications', createCrudRoutes(certificationsController));
 //# sourceMappingURL=admin.routes.js.map

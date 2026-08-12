@@ -71,3 +71,10 @@ export const publicBlogsController = createPublicController({
   publishedOnly: true,
   sort: { publishedAt: -1, createdAt: -1 },
 })
+
+export const publicCertificationsController = createPublicController({
+  collection: 'Certification',
+  resourceKey: 'certifications',
+  publishedOnly: true,
+  sort: { issuedAt: -1, order: 1 },
+})
