@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { dashboardStatsHandler, deleteMessageHandler, getMessageHandler, listMessagesHandler, markMessageReadHandler, } from '../controllers/admin.controller.js';
+import { dashboardStatsHandler, deleteMessageHandler, getMessageHandler, listMessagesHandler, markMessageReadHandler, visitStatsHandler, } from '../controllers/admin.controller.js';
+import { blogsController } from '../controllers/blog.controller.js';
 import { skillsController } from '../controllers/skill.controller.js';
 import { educationsController } from '../controllers/education.controller.js';
 import { experiencesController } from '../controllers/experience.controller.js';
@@ -9,6 +10,7 @@ import { createCrudRoutes } from './crud.routes.js';
 export const adminRouter = Router();
 adminRouter.use(protect, requireAdmin);
 adminRouter.get('/dashboard/stats', dashboardStatsHandler);
+adminRouter.get('/stats/visits', visitStatsHandler);
 adminRouter.get('/messages', listMessagesHandler);
 adminRouter.get('/messages/:id', getMessageHandler);
 adminRouter.patch('/messages/:id/read', markMessageReadHandler);
@@ -17,4 +19,5 @@ adminRouter.use('/skills', createCrudRoutes(skillsController));
 adminRouter.use('/educations', createCrudRoutes(educationsController));
 adminRouter.use('/experiences', createCrudRoutes(experiencesController));
 adminRouter.use('/projects', createCrudRoutes(projectsController));
+adminRouter.use('/blog', createCrudRoutes(blogsController));
 //# sourceMappingURL=admin.routes.js.map

@@ -9,11 +9,11 @@ import {
   countMessages,
   countUnreadMessages,
 } from '../repositories/message.repository.js'
+import { getVisitStats } from '../repositories/visitor.repository.js'
 
 const COLLECTIONS_TO_COUNT = ['Project', 'Skill', 'Experience', 'Education', 'Blog', 'Visitor'] as const
 
-export async function dashboardStatsHandler(_req: Request, res: Response): Promise<void> {
-  const db = await getDb()
+export async function dashboardStatsHandler(_req: Request, res: Response): Promise<void> {  const db = await getDb()
 
   const counts = await Promise.all(
     COLLECTIONS_TO_COUNT.map((collection) => db.collection(collection).countDocuments()),
@@ -67,4 +67,9 @@ export async function deleteMessageHandler(req: Request, res: Response): Promise
     throw new ApiError(404, 'Message introuvable')
   }
   res.status(200).json({ status: 'success', message: 'Message supprimé.' })
+}
+
+export async function visitStatsHandler(_req: Request, res: Response): Promise<void> {
+  const stats = await getVisitStats()
+  res.status(200).json({ status: 'success', data: stats })
 }

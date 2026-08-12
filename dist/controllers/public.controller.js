@@ -4,7 +4,7 @@ function serialize(doc) {
     const { _id, ...rest } = doc;
     return { id: _id.toString(), ...rest };
 }
-export function createPublicController({ collection, resourceKey, publishedOnly = false }) {
+export function createPublicController({ collection, resourceKey, publishedOnly = false, sort = { order: 1, createdAt: -1 }, }) {
     const filter = publishedOnly ? { isPublished: true } : {};
     return {
         async list(_req, res) {
@@ -12,7 +12,7 @@ export function createPublicController({ collection, resourceKey, publishedOnly 
             const docs = await db
                 .collection(collection)
                 .find(filter)
-                .sort({ order: 1, createdAt: -1 })
+                .sort(sort)
                 .toArray();
             res.status(200).json({ status: 'success', data: { [resourceKey]: docs.map(serialize) } });
         },
@@ -42,5 +42,11 @@ export const publicEducationsController = createPublicController({
 export const publicExperiencesController = createPublicController({
     collection: 'Experience',
     resourceKey: 'experiences',
+});
+export const publicBlogsController = createPublicController({
+    collection: 'Blog',
+    resourceKey: 'blogs',
+    publishedOnly: true,
+    sort: { publishedAt: -1, createdAt: -1 },
 });
 //# sourceMappingURL=public.controller.js.map

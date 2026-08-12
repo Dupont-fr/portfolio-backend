@@ -1,6 +1,7 @@
 import { getDb } from '../config/mongo.js';
 import { ApiError } from '../utils/ApiError.js';
 import { deleteMessage, getMessage, listMessages, markMessageRead, countMessages, countUnreadMessages, } from '../repositories/message.repository.js';
+import { getVisitStats } from '../repositories/visitor.repository.js';
 const COLLECTIONS_TO_COUNT = ['Project', 'Skill', 'Experience', 'Education', 'Blog', 'Visitor'];
 export async function dashboardStatsHandler(_req, res) {
     const db = await getDb();
@@ -45,5 +46,9 @@ export async function deleteMessageHandler(req, res) {
         throw new ApiError(404, 'Message introuvable');
     }
     res.status(200).json({ status: 'success', message: 'Message supprimé.' });
+}
+export async function visitStatsHandler(_req, res) {
+    const stats = await getVisitStats();
+    res.status(200).json({ status: 'success', data: stats });
 }
 //# sourceMappingURL=admin.controller.js.map

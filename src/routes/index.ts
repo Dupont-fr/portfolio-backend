@@ -4,6 +4,7 @@ import { authRouter } from './auth.routes.js'
 import { healthRouter } from './health.routes.js'
 import { messageRouter } from './message.routes.js'
 import { publicRouter } from './public.routes.js'
+import { visitRouter } from './visit.routes.js'
 
 export const apiRouter = Router()
 
@@ -11,4 +12,5 @@ apiRouter.use('/health', healthRouter)
 apiRouter.use('/messages', messageRouter)
 apiRouter.use('/auth', authRouter)
 apiRouter.use('/admin', adminRouter)
+apiRouter.use('/visits', visitRouter)
 apiRouter.use(publicRouter)

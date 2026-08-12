@@ -12,9 +12,15 @@ interface PublicControllerOptions {
   collection: string
   resourceKey: string
   publishedOnly?: boolean
+  sort?: Record<string, 1 | -1>
 }
 
-export function createPublicController({ collection, resourceKey, publishedOnly = false }: PublicControllerOptions) {
+export function createPublicController({
+  collection,
+  resourceKey,
+  publishedOnly = false,
+  sort = { order: 1, createdAt: -1 },
+}: PublicControllerOptions) {
   const filter = publishedOnly ? { isPublished: true } : {}
 
   return {
@@ -23,7 +29,7 @@ export function createPublicController({ collection, resourceKey, publishedOnly 
       const docs = await db
         .collection(collection)
         .find(filter)
-        .sort({ order: 1, createdAt: -1 })
+        .sort(sort)
         .toArray()
       res.status(200).json({ status: 'success', data: { [resourceKey]: docs.map(serialize) } })
     },
@@ -57,4 +63,11 @@ export const publicEducationsController = createPublicController({
 export const publicExperiencesController = createPublicController({
   collection: 'Experience',
   resourceKey: 'experiences',
+})
+
+export const publicBlogsController = createPublicController({
+  collection: 'Blog',
+  resourceKey: 'blogs',
+  publishedOnly: true,
+  sort: { publishedAt: -1, createdAt: -1 },
 })
