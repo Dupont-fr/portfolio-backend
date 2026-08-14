@@ -7,9 +7,15 @@ import { notFoundMiddleware } from './middlewares/not-found.middleware.js';
 import { apiRouter } from './routes/index.js';
 export function createApp() {
     const app = express();
+    const allowedOrigins = env.corsOrigin === '*'
+        ? ['*']
+        : env.corsOrigin
+            .split(',')
+            .map((origin) => origin.trim().replace(/\/+$/, ''))
+            .filter(Boolean);
     app.use(helmet());
     app.use(cors({
-        origin: env.corsOrigin === '*' ? true : env.corsOrigin.split(','),
+        origin: allowedOrigins.includes('*') ? true : allowedOrigins,
         credentials: true,
     }));
     app.use(express.json({ limit: '2mb' }));

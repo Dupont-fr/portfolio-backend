@@ -9,10 +9,18 @@ import { apiRouter } from './routes/index.js'
 export function createApp(): express.Express {
   const app = express()
 
+  const allowedOrigins =
+    env.corsOrigin === '*'
+      ? ['*']
+      : env.corsOrigin
+          .split(',')
+          .map((origin) => origin.trim().replace(/\/+$/, ''))
+          .filter(Boolean)
+
   app.use(helmet())
   app.use(
     cors({
-      origin: env.corsOrigin === '*' ? true : env.corsOrigin.split(','),
+      origin: allowedOrigins.includes('*') ? true : allowedOrigins,
       credentials: true,
     }),
   )
