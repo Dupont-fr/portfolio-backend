@@ -12,10 +12,14 @@ export function errorMiddleware(
   _next: NextFunction,
 ): void {
   if (error instanceof ZodError) {
+    const { fieldErrors } = error.flatten()
+    const readable = Object.values(fieldErrors)
+      .flat()
+      .join('. ')
     res.status(400).json({
       status: 'error',
-      message: 'Validation échouée',
-      details: error.flatten(),
+      message: readable || 'Veuillez corriger les erreurs dans le formulaire.',
+      details: fieldErrors,
     })
     return
   }
