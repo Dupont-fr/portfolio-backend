@@ -4,6 +4,7 @@ import { slugify } from '../utils/slugify.js'
 import { createCrudRepository } from '../repositories/crud.repository.js'
 import { createCrudController } from './crud.controller.js'
 import { blogSchema, type BlogInput } from '../validators/blog.validator.js'
+import { triggerFrontendRedeploy } from '../services/vercel-deploy.service.js'
 
 const blogRepository = createCrudRepository('Blog')
 
@@ -65,6 +66,7 @@ export const blogsController = {
     const resolved = await transformBlogInput(data as unknown as Record<string, unknown>)
     const blog = await blogRepository.create(resolved)
     res.status(201).json({ status: 'success', data: { blog } })
+    void triggerFrontendRedeploy()
   },
 
   async update(req: Request, res: Response): Promise<void> {
@@ -73,5 +75,13 @@ export const blogsController = {
     const blog = await blogRepository.update(String(req.params.id), resolved)
     if (!blog) throw new ApiError(404, 'Article introuvable')
     res.status(200).json({ status: 'success', data: { blog } })
+    void triggerFrontendRedeploy()
+  },
+
+  async remove(req: Request, res: Response): Promise<void> {
+    const removed = await blogRepository.remove(String(req.params.id))
+    if (!removed) throw new ApiError(404, 'Article introuvable')
+    res.status(200).json({ status: 'success', message: 'Article supprimé.' })
+    void triggerFrontendRedeploy()
   },
 }

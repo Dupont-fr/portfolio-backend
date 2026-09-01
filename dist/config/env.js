@@ -9,5 +9,6 @@ export const env = {
     brevoApiKey: process.env.BREVO_API_KEY ?? '',
     emailFrom: process.env.EMAIL_USER ?? '',
     contactEmail: process.env.EMAIL_USER ?? '',
+    vercelDeployHook: process.env.VERCEL_DEPLOY_HOOK_URL ?? '',
 };
 //# sourceMappingURL=env.js.map

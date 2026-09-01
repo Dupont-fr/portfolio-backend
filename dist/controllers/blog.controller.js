@@ -3,6 +3,7 @@ import { slugify } from '../utils/slugify.js';
 import { createCrudRepository } from '../repositories/crud.repository.js';
 import { createCrudController } from './crud.controller.js';
 import { blogSchema } from '../validators/blog.validator.js';
+import { triggerFrontendRedeploy } from '../services/vercel-deploy.service.js';
 const blogRepository = createCrudRepository('Blog');
 async function assertSlugAvailable(slug, excludeId) {
     const { getDb } = await import('../config/mongo.js');
@@ -51,6 +52,7 @@ export const blogsController = {
         const resolved = await transformBlogInput(data);
         const blog = await blogRepository.create(resolved);
         res.status(201).json({ status: 'success', data: { blog } });
+        void triggerFrontendRedeploy();
     },
     async update(req, res) {
         const data = blogSchema.partial().parse(req.body);
@@ -59,6 +61,14 @@ export const blogsController = {
         if (!blog)
             throw new ApiError(404, 'Article introuvable');
         res.status(200).json({ status: 'success', data: { blog } });
+        void triggerFrontendRedeploy();
+    },
+    async remove(req, res) {
+        const removed = await blogRepository.remove(String(req.params.id));
+        if (!removed)
+            throw new ApiError(404, 'Article introuvable');
+        res.status(200).json({ status: 'success', message: 'Article supprimé.' });
+        void triggerFrontendRedeploy();
     },
 };
 //# sourceMappingURL=blog.controller.js.map
