@@ -1,6 +1,7 @@
 import { createApp } from './app.js'
 import { env } from './config/env.js'
 import { pingDatabase } from './config/mongo.js'
+import { startScheduler } from './services/scheduler.service.js'
 
 const app = createApp()
 
@@ -8,6 +9,7 @@ app.listen(env.port, () => {
   console.log(`[api] listening on http://localhost:${env.port} (${env.nodeEnv})`)
   void checkDatabase()
   logConfig()
+  startScheduler()
 })
 
 async function checkDatabase() {
@@ -28,5 +30,10 @@ function logConfig() {
     console.log('[config] Brevo prêt ✓ (clé API configurée)')
   } else {
     console.warn('[config] BREVO_API_KEY manquante — les emails ne seront pas envoyés')
+  }
+  if (env.aiApiKey) {
+    console.log('[config] IA Gemini prête ✓ (clé API configurée)')
+  } else {
+    console.warn('[config] AI_API_KEY manquante — l\'assistant IA sera indisponible')
   }
 }

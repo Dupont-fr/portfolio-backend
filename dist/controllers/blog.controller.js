@@ -15,12 +15,18 @@ async function assertSlugAvailable(slug, excludeId) {
 }
 function resolvePublishedAt(data) {
     const published = data.isPublished === true;
+    const scheduledAt = data.scheduledAt;
+    const now = new Date().toISOString();
+    const isScheduled = Boolean(scheduledAt) && scheduledAt > now;
+    if (isScheduled) {
+        return { ...data, isPublished: false, publishedAt: data.publishedAt ?? null };
+    }
     const hasDate = data.publishedAt !== null && data.publishedAt !== undefined && data.publishedAt !== '';
     if (published && !hasDate) {
         return { ...data, publishedAt: new Date().toISOString() };
     }
-    if (!published && !hasDate) {
-        return data;
+    if (!published && scheduledAt) {
+        return { ...data, scheduledAt: null };
     }
     return data;
 }

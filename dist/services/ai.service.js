@@ -1,0 +1,114 @@
+import { env } from '../config/env.js';
+import { ApiError } from '../utils/ApiError.js';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+async function callGemini(prompt, temperature = 0.8) {
+    const apiKey = env.aiApiKey;
+    if (!apiKey) {
+        throw new ApiError(503, 'Clé API Gemini non configurée sur le serveur (AI_API_KEY).');
+    }
+    const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature, maxOutputTokens: 8192 },
+        }),
+    });
+    if (!response.ok) {
+        const detail = await response.text().catch(() => '');
+        console.error('[ai] Erreur Gemini :', response.status, detail.slice(0, 200));
+        throw new ApiError(502, 'Le service d\u2019IA a renvoyé une erreur. Réessayez dans un instant.');
+    }
+    const payload = (await response.json());
+    const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('');
+    if (!text || !text.trim()) {
+        throw new ApiError(502, 'Le service d\u2019IA n\u2019a rien renvoyé. Réessayez.');
+    }
+    return text.trim();
+}
+function extractJson(text) {
+    const cleaned = text
+        .replace(/```json|```/g, '')
+        .replace(/^[\s\S]*?(\{[\s\S]*\})[\s\S]*$/, '$1')
+        .trim();
+    try {
+        const parsed = JSON.parse(cleaned);
+        if (!parsed || typeof parsed !== 'object')
+            throw new Error('JSON invalide');
+        return parsed;
+    }
+    catch {
+        throw new ApiError(502, 'L\u2019IA a renvoyé une réponse que je n\u2019ai pas pu interpréter.');
+    }
+}
+export async function generateArticle(input) {
+    const language = input.language ?? 'français';
+    const tone = input.tone ?? 'professionnel et accessible';
+    const prompt = `Tu es un rédacteur web francophone expert. Rédige un article de blog complet en ${language} sur le thème suivant : « ${input.topic} ».
+
+Tonalité demandée : ${tone}.
+
+Règles :
+- Le sujet est lié au développement web, à l'ingénierie logicielle ou au parcours d'un développeur freelance.
+- Structure l'article en sections avec des titres en markdown (##).
+- Rédige entre 500 et 900 mots.
+- Utilise des listes (-) quand c'est pertinent et des mots en gras (**) pour les idées clés.
+- Termine par une conclusion qui ouvre sur une discussion.
+
+Réponds UNIQUEMENT avec un objet JSON valide au format suivant (sans texte autour) :
+{
+  "title": "un titre accrocheur",
+  "excerpt": "un extrait de 2 phrases qui résume l'article",
+  "content": "l'article complet en markdown",
+  "tags": ["tag1", "tag2", "tag3"]
+}`;
+    return extractJson(await callGemini(prompt));
+}
+export async function generateProject(description) {
+    const prompt = `Tu es un expert produit et développeur. À partir de la description suivante, conçois un projet de portfolio complet : « ${description} ».
+
+Réponds UNIQUEMENT avec un objet JSON valide (sans texte autour) :
+{
+  "title": "titre du projet",
+  "category": "catégorie (ex: Web App, Mobile, API, Design System…)",
+  "role": "rôle principal (ex: Développeur Full-Stack)",
+  "year": "année (ex: 2026)",
+  "description": "description courte et percutante d'une phrase",
+  "longDescription": "description longue de 3 à 5 phrases, professionnelle",
+  "stack": ["tech1", "tech2", "tech3"],
+  "features": ["fonctionnalité 1", "fonctionnalité 2", "fonctionnalité 3"],
+  "outcomes": ["résultat 1", "résultat 2"]
+}`;
+    return extractJson(await callGemini(prompt));
+}
+export async function rewriteText(input) {
+    const instructions = input.instructions ?? 'améliore le style tout en gardant le sens';
+    const prompt = `Récris le texte suivant en ${instructions}. Garde le sens, améliore la fluidité et le professionnalisme. Réponds UNIQUEMENT avec le texte réécrit (sans intro ni conclusion) :
+
+---
+
+${input.text}`;
+    return callGemini(prompt, 0.6);
+}
+export async function suggestTags(content) {
+    const prompt = `À partir du contenu suivant, propose entre 4 et 6 tags pertinents (mots-clés courts, en français, sans majuscules inutiles). Réponds UNIQUEMENT avec une liste JSON, par exemple : ["tag1", "tag2", "tag3"]
+
+---
+
+${content.slice(0, 4000)}`;
+    const raw = (await callGemini(prompt, 0.5)).replace(/```json|```/g, '');
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed))
+            throw new Error('Pas un tableau');
+        return parsed.filter((item) => typeof item === 'string').slice(0, 6);
+    }
+    catch {
+        return raw
+            .split(/[,\n]+/)
+            .map((item) => item.trim().replace(/^[\s"'-]+|[\s"'-]+$/g, ''))
+            .filter(Boolean)
+            .slice(0, 6);
+    }
+}
+//# sourceMappingURL=ai.service.js.map

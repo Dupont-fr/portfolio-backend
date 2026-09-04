@@ -11,4 +11,5 @@ export const env = {
   emailFrom: process.env.EMAIL_USER ?? '',
   contactEmail: process.env.EMAIL_USER ?? '',
   vercelDeployHook: process.env.VERCEL_DEPLOY_HOOK_URL ?? '',
+  aiApiKey: process.env.AI_API_KEY ?? '',
 } as const

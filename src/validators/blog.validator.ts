@@ -30,6 +30,15 @@ const publishedAt = z.preprocess(
     .nullable(),
 )
 
+const scheduledAt = z.preprocess(
+  (value) => (value === '' || value === null ? null : value),
+  z
+    .string()
+    .datetime()
+    .optional()
+    .nullable(),
+)
+
 export const blogSchema = z.object({
   title: z.string().trim().min(2, 'Le titre est requis').max(160, 'Titre trop long'),
   slug: z.preprocess(
@@ -48,6 +57,7 @@ export const blogSchema = z.object({
   tags: listOfText('Les tags', 60, 15),
   isPublished: z.boolean().default(false),
   publishedAt,
+  scheduledAt,
   order: z.number().int().min(0).default(0),
 })
 

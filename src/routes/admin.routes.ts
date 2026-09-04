@@ -7,6 +7,12 @@ import {
   markMessageReadHandler,
   visitStatsHandler,
 } from '../controllers/admin.controller.js'
+import {
+  generateArticleHandler,
+  generateProjectHandler,
+  rewriteHandler,
+  suggestTagsHandler,
+} from '../controllers/ai.controller.js'
 import { blogsController } from '../controllers/blog.controller.js'
 import { certificationsController } from '../controllers/certification.controller.js'
 import { skillsController } from '../controllers/skill.controller.js'
@@ -22,6 +28,11 @@ adminRouter.use(protect, requireAdmin)
 
 adminRouter.get('/dashboard/stats', dashboardStatsHandler)
 adminRouter.get('/stats/visits', visitStatsHandler)
+
+adminRouter.post('/ai/generate-article', generateArticleHandler)
+adminRouter.post('/ai/generate-project', generateProjectHandler)
+adminRouter.post('/ai/rewrite', rewriteHandler)
+adminRouter.post('/ai/suggest-tags', suggestTagsHandler)
 
 adminRouter.get('/messages', listMessagesHandler)
 adminRouter.get('/messages/:id', getMessageHandler)

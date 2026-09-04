@@ -19,12 +19,21 @@ async function assertSlugAvailable(slug: string, excludeId?: string): Promise<vo
 
 function resolvePublishedAt(data: Record<string, unknown>): Record<string, unknown> {
   const published = data.isPublished === true
+  const scheduledAt = data.scheduledAt as string | null | undefined
+  const now = new Date().toISOString()
+
+  const isScheduled = Boolean(scheduledAt) && scheduledAt! > now
+
+  if (isScheduled) {
+    return { ...data, isPublished: false, publishedAt: data.publishedAt ?? null }
+  }
+
   const hasDate = data.publishedAt !== null && data.publishedAt !== undefined && data.publishedAt !== ''
   if (published && !hasDate) {
     return { ...data, publishedAt: new Date().toISOString() }
   }
-  if (!published && !hasDate) {
-    return data
+  if (!published && scheduledAt) {
+    return { ...data, scheduledAt: null }
   }
   return data
 }
