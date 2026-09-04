@@ -1,30 +1,48 @@
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
 async function callGemini(prompt, temperature = 0.8) {
     const apiKey = env.aiApiKey;
     if (!apiKey) {
         throw new ApiError(503, 'Clé API Gemini non configurée sur le serveur (AI_API_KEY).');
     }
-    const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature, maxOutputTokens: 8192 },
-        }),
-    });
-    if (!response.ok) {
-        const detail = await response.text().catch(() => '');
-        console.error('[ai] Erreur Gemini :', response.status, detail.slice(0, 200));
-        throw new ApiError(502, 'Le service d\u2019IA a renvoyé une erreur. Réessayez dans un instant.');
+    let lastError = null;
+    for (const model of GEMINI_MODELS) {
+        try {
+            const response = await fetch(`${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { temperature, maxOutputTokens: 8192 },
+                }),
+            });
+            if (!response.ok) {
+                const detail = await response.text().catch(() => '');
+                console.error(`[ai] Modèle ${model} : erreur ${response.status} :`, detail.slice(0, 200));
+                if (response.status === 429) {
+                    throw new ApiError(429, 'Limite de requêtes IA atteinte. Patientez quelques secondes et réessayez.');
+                }
+                lastError = new Error(`Modèle ${model} indisponible (${response.status})`);
+                continue;
+            }
+            const payload = (await response.json());
+            const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('');
+            if (!text || !text.trim()) {
+                lastError = new Error(`Modèle ${model} : réponse vide`);
+                continue;
+            }
+            return text.trim();
+        }
+        catch (error) {
+            if (error instanceof ApiError)
+                throw error;
+            lastError = error instanceof Error ? error : new Error('Erreur inconnue');
+        }
     }
-    const payload = (await response.json());
-    const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('');
-    if (!text || !text.trim()) {
-        throw new ApiError(502, 'Le service d\u2019IA n\u2019a rien renvoyé. Réessayez.');
-    }
-    return text.trim();
+    console.error('[ai] Tous les modèles ont échoué :', lastError?.message ?? 'erreur inconnue');
+    throw new ApiError(502, 'Le service d’IA est temporairement indisponible. Réessayez dans un instant.');
 }
 function extractJson(text) {
     const cleaned = text
