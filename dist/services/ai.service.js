@@ -2,6 +2,7 @@ import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+const GEMINI_TIMEOUT_MS = 90_000;
 async function callGemini(prompt, temperature = 0.8) {
     const apiKey = env.aiApiKey;
     if (!apiKey) {
@@ -13,6 +14,7 @@ async function callGemini(prompt, temperature = 0.8) {
             const response = await fetch(`${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { temperature, maxOutputTokens: 8192 },
