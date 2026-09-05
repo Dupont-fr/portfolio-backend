@@ -1,5 +1,11 @@
 import type { Request, Response } from 'express'
-import { generateArticle, generateProject, rewriteText, suggestTags } from '../services/ai.service.js'
+import {
+  draftReply,
+  generateArticle,
+  generateProject,
+  rewriteText,
+  suggestTags,
+} from '../services/ai.service.js'
 
 export async function generateArticleHandler(req: Request, res: Response): Promise<void> {
   const topic = typeof req.body.topic === 'string' ? req.body.topic.trim() : ''
@@ -46,4 +52,29 @@ export async function suggestTagsHandler(req: Request, res: Response): Promise<v
   }
   const tags = await suggestTags(content)
   res.status(200).json({ status: 'success', data: { tags } })
+}
+
+export async function draftReplyHandler(req: Request, res: Response): Promise<void> {
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : ''
+  const originalSubject =
+    typeof req.body.originalSubject === 'string' ? req.body.originalSubject.trim() : ''
+  const originalMessage =
+    typeof req.body.originalMessage === 'string' ? req.body.originalMessage.trim() : ''
+
+  if (!originalMessage) {
+    res.status(400).json({ status: 'error', message: 'Le message d’origine est requis.' })
+    return
+  }
+  if (originalMessage.length < 5) {
+    res.status(400).json({ status: 'error', message: 'Le message d’origine est trop court.' })
+    return
+  }
+
+  const reply = await draftReply({
+    name,
+    originalSubject,
+    originalMessage,
+    tone: typeof req.body.tone === 'string' ? req.body.tone : undefined,
+  })
+  res.status(200).json({ status: 'success', data: { reply } })
 }

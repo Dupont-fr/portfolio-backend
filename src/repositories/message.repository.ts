@@ -11,6 +11,8 @@ export interface MessageRecord {
   subject: string
   message: string
   isRead: boolean
+  reply?: string | null
+  repliedAt?: Date | null
   createdAt: Date
 }
 
@@ -21,6 +23,8 @@ interface MessageDoc {
   subject: string
   message: string
   isRead?: boolean
+  reply?: string | null
+  repliedAt?: Date | null
   createdAt: Date
   updatedAt?: Date
 }
@@ -33,6 +37,8 @@ function toRecord(doc: MessageDoc): MessageRecord {
     subject: doc.subject,
     message: doc.message,
     isRead: doc.isRead ?? false,
+    reply: doc.reply ?? null,
+    repliedAt: doc.repliedAt ?? null,
     createdAt: doc.createdAt,
   }
 }
@@ -88,6 +94,23 @@ export async function markMessageRead(id: string): Promise<MessageRecord | null>
   const doc = await db.collection<MessageDoc>(MESSAGES_COLLECTION).findOneAndUpdate(
     { _id: objectId },
     { $set: { isRead: true } },
+    { returnDocument: 'after' },
+  )
+  return doc ? toRecord(doc) : null
+}
+
+export async function markMessageReplied(id: string, reply: string): Promise<MessageRecord | null> {
+  let objectId: ObjectId
+  try {
+    objectId = new ObjectId(id)
+  } catch {
+    return null
+  }
+  const db = await getDb()
+  const now = new Date()
+  const doc = await db.collection<MessageDoc>(MESSAGES_COLLECTION).findOneAndUpdate(
+    { _id: objectId },
+    { $set: { isRead: true, reply, repliedAt: now, updatedAt: now } },
     { returnDocument: 'after' },
   )
   return doc ? toRecord(doc) : null

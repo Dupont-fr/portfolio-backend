@@ -9,6 +9,8 @@ function toRecord(doc) {
         subject: doc.subject,
         message: doc.message,
         isRead: doc.isRead ?? false,
+        reply: doc.reply ?? null,
+        repliedAt: doc.repliedAt ?? null,
         createdAt: doc.createdAt,
     };
 }
@@ -58,6 +60,19 @@ export async function markMessageRead(id) {
     }
     const db = await getDb();
     const doc = await db.collection(MESSAGES_COLLECTION).findOneAndUpdate({ _id: objectId }, { $set: { isRead: true } }, { returnDocument: 'after' });
+    return doc ? toRecord(doc) : null;
+}
+export async function markMessageReplied(id, reply) {
+    let objectId;
+    try {
+        objectId = new ObjectId(id);
+    }
+    catch {
+        return null;
+    }
+    const db = await getDb();
+    const now = new Date();
+    const doc = await db.collection(MESSAGES_COLLECTION).findOneAndUpdate({ _id: objectId }, { $set: { isRead: true, reply, repliedAt: now, updatedAt: now } }, { returnDocument: 'after' });
     return doc ? toRecord(doc) : null;
 }
 export async function deleteMessage(id) {

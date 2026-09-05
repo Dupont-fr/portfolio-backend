@@ -5,9 +5,11 @@ import {
   getMessageHandler,
   listMessagesHandler,
   markMessageReadHandler,
+  replyMessageHandler,
   visitStatsHandler,
 } from '../controllers/admin.controller.js'
 import {
+  draftReplyHandler,
   generateArticleHandler,
   generateProjectHandler,
   rewriteHandler,
@@ -33,10 +35,12 @@ adminRouter.post('/ai/generate-article', generateArticleHandler)
 adminRouter.post('/ai/generate-project', generateProjectHandler)
 adminRouter.post('/ai/rewrite', rewriteHandler)
 adminRouter.post('/ai/suggest-tags', suggestTagsHandler)
+adminRouter.post('/ai/reply-draft', draftReplyHandler)
 
 adminRouter.get('/messages', listMessagesHandler)
 adminRouter.get('/messages/:id', getMessageHandler)
 adminRouter.patch('/messages/:id/read', markMessageReadHandler)
+adminRouter.post('/messages/:id/reply', replyMessageHandler)
 adminRouter.delete('/messages/:id', deleteMessageHandler)
 
 adminRouter.use('/skills', createCrudRoutes(skillsController))

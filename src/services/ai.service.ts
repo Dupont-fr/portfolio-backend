@@ -160,3 +160,34 @@ ${content.slice(0, 4000)}`
       .slice(0, 6)
   }
 }
+
+export interface AiReplyInput {
+  name: string
+  originalSubject: string
+  originalMessage: string
+  tone?: string
+}
+
+export async function draftReply(input: AiReplyInput): Promise<string> {
+  const tone = input.tone ?? 'chaleureux et professionnel'
+  const prompt = `Tu es Dupont Djeague, un développeur full stack freelance. Réponds au message qu'un visiteur vient de t'envoyer via ton portfolio.
+
+Tonité souhaitée : ${tone}.
+
+Le visiteur : ${input.name}
+Sujet du message : ${input.originalSubject}
+Message reçu :
+---
+${input.originalMessage}
+---
+
+Règles :
+- Rédige entre 80 et 220 mots, en français.
+- Ne commence pas par "Bonjour ${input.name}" : commence directement le contenu de ta réponse (l'email sera structuré avec un titre "Bonjour {nom}").
+- Personnalise ta réponse pour répondre précisément à ce que demande le visiteur.
+- Termine par une question ouverte ou une invitation à poursuivre la conversation, puis une salutation ("Cordialement, Dupont Djeague").
+
+Réponds UNIQUEMENT avec le corps de la réponse (sans sujet, sans "Objet :", sans signature répétée).`
+
+  return callGemini(prompt, 0.7)
+}

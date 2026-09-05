@@ -164,4 +164,39 @@ export async function sendConfirmationEmail(data) {
         htmlContent: emailShell(confirmationContent(data)),
     });
 }
+function replyContent(data) {
+    return `
+    ${brandBlock()}
+
+    <h1 style="margin:0 0 20px;font-family:'Segoe UI',Arial,sans-serif;color:#FFFFFF;font-size:22px;font-weight:700">Bonjour ${escapeHtml(data.toName)},</h1>
+
+    <div style="font-family:'Segoe UI',Arial,sans-serif;color:#BFC7D5;font-size:15px;line-height:1.8;margin-bottom:28px;white-space:pre-wrap">${escapeHtml(data.reply)}</div>
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#050F2C;border:1px solid rgba(255,255,255,0.08);border-radius:12px;margin-bottom:28px">
+      <tr>
+        <td style="padding:20px">
+          <div style="font-family:'Segoe UI',Arial,sans-serif;color:#8CA3D4;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Votre message d'origine</div>
+          <div style="font-family:'Segoe UI',Arial,sans-serif;color:#FFFFFF;font-size:15px;font-weight:600;margin-bottom:8px">${escapeHtml(data.originalSubject)}</div>
+          <div style="font-family:'Segoe UI',Arial,sans-serif;color:#BFC7D5;font-size:14px;line-height:1.6;white-space:pre-wrap">${escapeHtml(data.originalMessage)}</div>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 28px;font-family:'Segoe UI',Arial,sans-serif;color:#BFC7D5;font-size:13px;line-height:1.6;text-align:center">
+      Vous recevez cette réponse car vous avez contacté Dupont Djeague via son portfolio.
+    </p>
+
+    ${signatureBlock()}
+  `;
+}
+export async function sendReplyEmail(data) {
+    console.log(`[email] Envoi de la réponse à ${data.to}...`);
+    const prefix = data.originalSubject.toLowerCase().startsWith('re:') ? '' : 'Re : ';
+    await sendBrevo({
+        to: [{ email: data.to, name: data.toName }],
+        replyTo: { email: env.emailFrom, name: 'Dupont Djeague' },
+        subject: `${prefix}${data.originalSubject}`,
+        htmlContent: emailShell(replyContent(data)),
+    });
+}
 //# sourceMappingURL=email.service.js.map
