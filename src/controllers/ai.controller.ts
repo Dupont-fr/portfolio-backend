@@ -17,6 +17,7 @@ export async function generateArticleHandler(req: Request, res: Response): Promi
     topic,
     tone: typeof req.body.tone === 'string' ? req.body.tone : undefined,
     language: typeof req.body.language === 'string' ? req.body.language : undefined,
+    withImages: req.body.withImages === true,
   })
   res.status(200).json({ status: 'success', data: result })
 }

@@ -12,4 +12,6 @@ export const env = {
   contactEmail: process.env.EMAIL_USER ?? '',
   vercelDeployHook: process.env.VERCEL_DEPLOY_HOOK_URL ?? '',
   aiApiKey: process.env.AI_API_KEY ?? '',
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME ?? 'ddnolovmg',
+  cloudinaryUploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET ?? 'rony_hair_uploads',
 } as const
