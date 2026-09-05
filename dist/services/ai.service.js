@@ -69,7 +69,9 @@ async function callGeminiImage(prompt, aspectRatio = '16:9') {
     }
     let lastError = null;
     for (const model of GEMINI_IMAGE_MODELS) {
-        for (const withAspect of [true, false]) {
+        const supportsAspect = model.includes('2.5-flash');
+        const attempts = supportsAspect ? [true, false] : [false];
+        for (const withAspect of attempts) {
             try {
                 const generationConfig = { responseModalities: ['IMAGE'] };
                 if (withAspect)
@@ -87,7 +89,7 @@ async function callGeminiImage(prompt, aspectRatio = '16:9') {
                     const detail = await response.text().catch(() => '');
                     console.error(`[ai-image] ${model} (aspect=${withAspect}) : ${response.status}`, detail.slice(0, 200));
                     if (response.status === 429) {
-                        throw new ApiError(429, 'Limite de requêtes IA atteinte. Patientez quelques secondes et réessayez.');
+                        throw new ApiError(429, 'Quota de génération d\u2019images IA atteint (plan gratuit). Patientez ou consultez vos quotas dans AI Studio, puis réessayez.');
                     }
                     if (response.status === 400 && withAspect)
                         continue;
@@ -117,6 +119,7 @@ async function uploadImageToCloudinary(base64Data, mimeType, publicId) {
     formData.append('file', `data:${mimeType};base64,${base64Data}`);
     formData.append('upload_preset', env.cloudinaryUploadPreset);
     formData.append('public_id', publicId);
+    formData.append('transformation', 'c_fill,g_auto,w_1280,h_720');
     const response = await fetch(`https://api.cloudinary.com/v1_1/${env.cloudinaryCloudName}/image/upload`, {
         method: 'POST',
         body: formData,
