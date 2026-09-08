@@ -1,3 +1,4 @@
+import { getDb } from '../config/mongo.js'
 import { env } from '../config/env.js'
 import { ApiError } from '../utils/ApiError.js'
 
@@ -369,6 +370,203 @@ Règles :
 - Termine par une question ouverte ou une invitation à poursuivre la conversation, puis une salutation ("Cordialement, Dupont Djeague").
 
 Réponds UNIQUEMENT avec le corps de la réponse (sans sujet, sans "Objet :", sans signature répétée).`
+
+  return callGemini(prompt, 0.7)
+}
+
+export interface PortfolioChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+const PORTFOLIO_PROFILE = {
+  name: 'Dupont Djeague',
+  alias: 'Dupont',
+  role: 'Développeur Full Stack JavaScript (freelance)',
+  tagline: 'Je conçois et développe des expériences web premium, performantes et accessibles.',
+  location: 'Ouest Cameroun',
+  email: 'dupontdjeague@gmail.com',
+  phone: '+237 692 763 964',
+  website: 'https://dupontdjeague.de5.net',
+  availability: 'Disponible pour de nouvelles missions',
+}
+
+let contextCache: { builtAt: number; value: string } | null = null
+const CONTEXT_CACHE_TTL_MS = 60_000
+
+async function buildPortfolioContext(): Promise<string> {
+  const now = Date.now()
+  if (contextCache && now - contextCache.builtAt < CONTEXT_CACHE_TTL_MS) {
+    return contextCache.value
+  }
+
+  const db = await getDb()
+  const [projects, skills, experiences, educations, certifications, blogs] = await Promise.all([
+    db
+      .collection('Project')
+      .find({ isPublished: true })
+      .sort({ order: 1, createdAt: -1 })
+      .limit(20)
+      .toArray(),
+    db
+      .collection('Skill')
+      .find({ isPublished: true })
+      .sort({ order: 1 })
+      .limit(60)
+      .toArray(),
+    db
+      .collection('Experience')
+      .find({})
+      .sort({ order: 1, startDate: -1 })
+      .limit(15)
+      .toArray(),
+    db
+      .collection('Education')
+      .find({})
+      .sort({ order: 1, startDate: -1 })
+      .limit(8)
+      .toArray(),
+    db
+      .collection('Certification')
+      .find({ isPublished: true })
+      .sort({ order: 1 })
+      .limit(15)
+      .toArray(),
+    db
+      .collection('Blog')
+      .find({ isPublished: true })
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .limit(12)
+      .toArray(),
+  ])
+
+  const lines: string[] = []
+
+  if (skills.length > 0) {
+    const grouped = new Map<string, string[]>()
+    for (const skill of skills) {
+      const category = typeof skill.category === 'string' && skill.category ? skill.category : 'Général'
+      const list = grouped.get(category) ?? []
+      list.push(typeof skill.name === 'string' ? skill.name : '')
+      grouped.set(category, list)
+    }
+    lines.push('Compétences :')
+    for (const [category, names] of grouped) {
+      lines.push(`- ${category} : ${names.filter(Boolean).join(', ')}`)
+    }
+  }
+
+  if (projects.length > 0) {
+    lines.push('Projets :')
+    for (const project of projects) {
+      const details = [
+        `titre="${project.title}"`,
+        typeof project.role === 'string' && project.role ? `rôle="${project.role}"` : '',
+        typeof project.year === 'string' && project.year ? `année=${project.year}` : '',
+        typeof project.category === 'string' && project.category ? `catégorie="${project.category}"` : '',
+        typeof project.description === 'string' ? `description="${String(project.description).slice(0, 220)}"` : '',
+        Array.isArray(project.stack) && project.stack.length > 0
+          ? `stack=${(project.stack as string[]).slice(0, 12).join(', ')}`
+          : '',
+        Array.isArray(project.features) && project.features.length > 0
+          ? `fonctionnalités=${(project.features as string[]).slice(0, 6).join(' | ')}`
+          : '',
+        Array.isArray(project.outcomes) && project.outcomes.length > 0
+          ? `résultats=${(project.outcomes as string[]).slice(0, 4).join(' | ')}`
+          : '',
+        typeof project.liveUrl === 'string' && project.liveUrl ? `lien=${project.liveUrl}` : '',
+        typeof project.githubUrl === 'string' && project.githubUrl ? `github=${project.githubUrl}` : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+      lines.push(`- ${details.slice(0, 800)}`)
+    }
+  }
+
+  if (experiences.length > 0) {
+    lines.push('Expériences professionnelles :')
+    for (const experience of experiences) {
+      const period = typeof experience.startDate === 'string' ? experience.startDate.slice(0, 7) : ''
+      const end = experience.isCurrent
+        ? 'aujourd’hui'
+        : typeof experience.endDate === 'string' && experience.endDate
+          ? experience.endDate.slice(0, 7)
+          : ''
+      lines.push(
+        `- ${experience.role} chez ${experience.company} (${[period, end].filter(Boolean).join(' → ')}) — ${String(
+          experience.description ?? '',
+        ).slice(0, 220)}`,
+      )
+    }
+  }
+
+  if (educations.length > 0) {
+    lines.push('Formations :')
+    for (const education of educations) {
+      lines.push(
+        `- ${education.degree} à ${education.school}${typeof education.field === 'string' && education.field ? ` (${education.field})` : ''}`,
+      )
+    }
+  }
+
+  if (certifications.length > 0) {
+    lines.push('Certifications :')
+    for (const certification of certifications) {
+      lines.push(
+        `- ${certification.title} — ${certification.issuer}`,
+      )
+    }
+  }
+
+  if (blogs.length > 0) {
+    lines.push('Articles de blog :')
+    for (const blog of blogs) {
+      lines.push(`- "${blog.title}" : ${String(blog.excerpt ?? '').slice(0, 200)}`)
+    }
+  }
+
+  const value = lines.join('\n').slice(0, 14_000)
+  contextCache = { builtAt: now, value }
+  return value
+}
+
+export async function chatWithPortfolio(messages: PortfolioChatMessage[]): Promise<string> {
+  const context = await buildPortfolioContext()
+
+  const profile = PORTFOLIO_PROFILE
+  const conversation = messages
+    .slice(-10)
+    .map((message) => `${message.role === 'user' ? 'Visiteur' : 'Dupont AI'} : ${message.content.slice(0, 500)}`)
+    .join('\n')
+
+  const prompt = `Tu es « Dupont AI », l'assistant virtuel officiel du portfolio de ${profile.name}, ${profile.role}.
+
+PROFIL DE ${profile.name.toUpperCase()} :
+- Nom : ${profile.name}
+- Rôle : ${profile.role}
+- Tagline : ${profile.tagline}
+- Localisation : ${profile.location}
+- Disponibilité : ${profile.availability}
+- Email : ${profile.email}
+- Téléphone / WhatsApp : ${profile.phone}
+- Site web : ${profile.website}
+
+RÈGLES STRICTES :
+1. Tu réponds UNIQUEMENT à propos de ${profile.name} et de son travail (profil, compétences, projets, expériences, formations, certifications, articles, services, disponibilité, contact).
+2. Pour toute question hors de ce cadre (autre sujet, recruteur de concurrents, demande hors sujet…), réponds poliment que tu es là uniquement pour parler du profil et du travail de ${profile.name}.
+3. Ne parle QUE de ${profile.name} : refuse poliment de parler d'autres personnes, entreprises ou outils à sa place.
+4. Base-toi UNIQUEMENT sur le contexte fourni ci-dessous. Si l'information n'y figure pas, ne l'invente JAMAIS : dis que tu ne disposes pas de cette information et propose de contacter ${profile.name} par email (${profile.email}) ou WhatsApp (${profile.phone}).
+5. Tu es son assistant IA, pas ${profile.name} lui-même. Ne te fais jamais passer pour lui.
+6. Ton est chaleureux, professionnel et concis. Réponds en français (sauf si le visiteur écrit dans une autre langue, alors réponds dans cette langue).
+7. Utilise un markdown léger si utile (listes, gras), sans titres. Réponse généralement courte (80 à 180 mots), sauf si le visiteur demande plus de détails.
+
+CONTEXTE DU PORTFOLIO :
+${context || 'Aucune donnée disponible pour le moment.'}
+
+HISTORIQUE DE LA CONVERSATION :
+${conversation || 'Aucun historique.'}
+
+Réponds maintenant au dernier message du visiteur.`
 
   return callGemini(prompt, 0.7)
 }

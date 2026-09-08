@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { portfolioChatHandler } from '../controllers/ai.controller.js'
 import {
   publicBlogsController,
   publicCertificationsController,
@@ -10,6 +11,7 @@ import {
 
 export const publicRouter = Router()
 
+publicRouter.post('/ai/chat', portfolioChatHandler)
 publicRouter.get('/projects', publicProjectsController.list)
 publicRouter.get('/projects/:slug', publicProjectsController.getBySlug)
 publicRouter.get('/skills', publicSkillsController.list)

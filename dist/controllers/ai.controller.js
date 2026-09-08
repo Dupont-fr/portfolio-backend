@@ -1,4 +1,4 @@
-import { draftReply, generateArticle, generateProject, rewriteText, suggestTags, } from '../services/ai.service.js';
+import { chatWithPortfolio, draftReply, generateArticle, generateProject, rewriteText, suggestTags, } from '../services/ai.service.js';
 export async function generateArticleHandler(req, res) {
     const topic = typeof req.body.topic === 'string' ? req.body.topic.trim() : '';
     if (!topic) {
@@ -61,6 +61,49 @@ export async function draftReplyHandler(req, res) {
         originalMessage,
         tone: typeof req.body.tone === 'string' ? req.body.tone : undefined,
     });
+    res.status(200).json({ status: 'success', data: { reply } });
+}
+const CHAT_RATE_WINDOW_MS = 60_000;
+const CHAT_RATE_MAX_PER_WINDOW = 10;
+const ipHits = new Map();
+function isChatRateLimited(ip) {
+    const now = Date.now();
+    const windowStart = now - CHAT_RATE_WINDOW_MS;
+    const hits = (ipHits.get(ip) ?? []).filter((timestamp) => timestamp >= windowStart);
+    if (hits.length >= CHAT_RATE_MAX_PER_WINDOW) {
+        ipHits.set(ip, hits);
+        return true;
+    }
+    hits.push(now);
+    ipHits.set(ip, hits);
+    return false;
+}
+export async function portfolioChatHandler(req, res) {
+    const ip = typeof req.ip === 'string' && req.ip ? req.ip : req.socket?.remoteAddress ?? 'unknown';
+    if (isChatRateLimited(ip)) {
+        res.status(429).json({
+            status: 'error',
+            message: 'Trop de messages envoyés. Patientez quelques secondes puis réessayez.',
+        });
+        return;
+    }
+    const rawMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
+    const messages = rawMessages
+        .filter((raw) => raw !== null && typeof raw === 'object')
+        .filter((raw) => (raw.role === 'user' || raw.role === 'assistant') &&
+        typeof raw.content === 'string' &&
+        raw.content.trim().length > 0)
+        .map((raw) => ({
+        role: raw.role === 'assistant' ? 'assistant' : 'user',
+        content: String(raw.content).trim().slice(0, 500),
+    }))
+        .slice(-12);
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== 'user') {
+        res.status(400).json({ status: 'error', message: 'Aucune question valide à traiter.' });
+        return;
+    }
+    const reply = await chatWithPortfolio(messages);
     res.status(200).json({ status: 'success', data: { reply } });
 }
 //# sourceMappingURL=ai.controller.js.map
